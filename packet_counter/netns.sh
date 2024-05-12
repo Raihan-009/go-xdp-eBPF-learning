@@ -1,24 +1,31 @@
 #!/bin/bash
 
+## Arguments
 BUILD="build"
 CLEAN="clean"
 
+## Variables
+NODENAME="node1"
+VETH_HOST="veth1"
+VETH_HOST_IP="192.168.0.1/24"
+VETH_NS="veth2"
+VETH_NS_IP="192.168.0.2/24"
+
+## ENV Setup
 if [ "$BUILD" = "$1" ]; then
-	ip netns add node1
-	ip link add veth0 type veth peer veth1
-	ip link set veth1 netns node1
-	ip addr add 192.168.0.3/24 dev veth0
-	ip netns exec node1 ip addr add 192.168.0.2/24 dev veth1
-	ip link set up dev veth0
-	ip netns exec node1 ip link set up dev veth1
-	ip netns exec node1 ip link set up dev lo
+	ip netns add "$NODENAME"
+	ip link add "$VETH_HOST" type veth peer "$VETH_NS"
+	ip link set "$VETH_NS" netns "$NODENAME"
+	ip addr add "$VETH_HOST_IP" dev "$VETH_HOST"
+	ip netns exec "$NODENAME" ip addr add "$VETH_NS_IP" dev "$VETH_NS"
+	ip link set up dev "$VETH_HOST"
+	ip netns exec "$NODENAME" ip link set up dev "$VETH_NS"
+	ip netns exec "$NODENAME" ip link set up dev lo
 
 elif [ "$CLEAN" = "$1" ]; then
-	ip netns del node1
+	ip netns del "$NODENAME"
 else
 	echo "help:"
 	echo "	build: build a network to test with netns"
 	echo "	clean: clean up a network"
 fi
-
-
